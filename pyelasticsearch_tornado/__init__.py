@@ -1,0 +1,1 @@
+from .asyncelasticsearch import AsyncElasticSearch
