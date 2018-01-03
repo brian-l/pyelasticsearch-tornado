@@ -7,7 +7,12 @@ from six import iteritems
 from tornado import gen
 from tornado import ioloop
 from tornado.httpclient import AsyncHTTPClient, HTTPError, HTTPRequest
-from urllib import urlencode
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
+
 
 class AsyncElasticSearch(ElasticSearch):
     client = AsyncHTTPClient()
@@ -62,10 +67,10 @@ class AsyncElasticSearch(ElasticSearch):
             method, url, request_body,
         )
 
-        for attempt in xrange(self.max_retries + 1):
+        for attempt in range(self.max_retries + 1):
             try:
                 response = yield self.client.fetch(request)
-            except HTTPError, he:
+            except HTTPError as he:
                 if attempt >= self.max_retries:
                     raise
 
@@ -87,13 +92,13 @@ class AsyncElasticSearch(ElasticSearch):
     def _decode_response(self, response):
         """Return a native-Python representation of a response's JSON blob."""
         try:
-            json_response = json.loads(response)
+            json_response = json.loads(response.decode('utf-8'))
         except ValueError:
             raise InvalidJsonResponseError(response)
         return json_response
 
     def _search_or_count(self, kind, query, index=None, doc_type=None, query_params=None):
-        if isinstance(query, basestring):
+        if isinstance(query, str):
             query_params['q'] = query
             body = ''
         else:
